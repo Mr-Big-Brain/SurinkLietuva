@@ -14,38 +14,46 @@ import java.util.stream.Collectors;
 
 public class BigDataManager {
 
-    private List<Magnet> magnets = new ArrayList<>();
     private File file;
-
+    static final String magnetDatabaseDirectory = "\\src\\main\\java\\com\\example\\surinklietuva\\ProgramMemory\\MagnetsDataBase";
+    static final String userDatabaseDirectory = "\\src\\main\\java\\com\\example\\surinklietuva\\ProgramMemory\\UsersDataBase";
     public List<Magnet> getAllMagnetsListFromDataBase() throws FileNotFoundException {
-
-        file = new File(System.getProperty("user.dir") + "\\src\\main\\java\\com\\example\\surinklietuva\\ProgramMemory\\MagnetsDataBase");
-        Scanner scanner = new Scanner(file);
-        String line;
-        String permArea = "Vilniaus apskritis";
-        String permCity = "UKMERGĖ";
-        List<String> permShops = new ArrayList<>();
-        while (scanner.hasNextLine()) {
-            line = scanner.nextLine();
-            if (line.charAt(0) == 'A' && line.charAt(1) == 'A' && line.charAt(2) == 'A') {
-                magnets.add(new Magnet(permArea, permCity, permShops));
-                permShops = new ArrayList<>();
-                permArea = makeAreaOrCityFromLine(line);
+        List<Magnet> magnets = new ArrayList<>();
+        file = new File(System.getProperty("user.dir") + magnetDatabaseDirectory);
+        String permArea;
+        String permCity;
+        List<String> permShops;
+        try (Scanner scanner = new Scanner(file)) {
+            String line;
+            permArea = "Vilniaus apskritis";
+            permCity = "UKMERGĖ";
+            permShops = new ArrayList<>();
+            while (scanner.hasNextLine()) {
                 line = scanner.nextLine();
-                permCity = makeAreaOrCityFromLine(line);
-            } else if (line.charAt(0) == 'M' && line.charAt(1) == 'M' && line.charAt(2) == 'M') {
+                if (line.charAt(0) == 'A' && line.charAt(1) == 'A' && line.charAt(2) == 'A') {
+                    magnets.add(new Magnet(permArea, permCity, permShops));
+                    permShops = new ArrayList<>();
+                    permArea = makeAreaOrCityFromLine(line);
+                    line = scanner.nextLine();
+                    permCity = makeAreaOrCityFromLine(line);
+                } else if (line.charAt(0) == 'M' && line.charAt(1) == 'M' && line.charAt(2) == 'M') {
 
-                magnets.add(new Magnet(permArea, permCity, permShops));
-                permShops = new ArrayList<>();
-                permCity = makeAreaOrCityFromLine(line);
-            } else {
-                permShops.add(line);
+                    magnets.add(new Magnet(permArea, permCity, permShops));
+                    permShops = new ArrayList<>();
+                    permCity = makeAreaOrCityFromLine(line);
+                } else {
+                    permShops.add(line);
+                }
             }
+            magnets.add(new Magnet(permArea, permCity, permShops));
+            return magnets;
         }
-        magnets.add(new Magnet(permArea, permCity, permShops));
-        return magnets;
+        catch(Exception e)
+        {
+            System.out.println("File not found");
+            return null;
+        }
     }
-
     private String makeAreaOrCityFromLine(String line) {
 
         String area = "";
@@ -55,11 +63,8 @@ public class BigDataManager {
         return area;
     }
 
-    //private List<Magnet> getAllMagnetsByArea(String areaName, List<Magnet> allMagnets) /////////////NOT FININSHEDDDDDDDD    {
-    //for(int i=allMagnets.size())        return null;    }
-
     public List<User> getAllUserListFromDataBase() throws FileNotFoundException {
-        file = new File(System.getProperty("user.dir") + "\\src\\main\\java\\com\\example\\surinklietuva\\ProgramMemory\\UsersDataBase");
+        file = new File(System.getProperty("user.dir") + userDatabaseDirectory);
         List<User> users = new ArrayList<>();
         Scanner scanner = new Scanner(file);
         List<String> tempStrings;
@@ -90,20 +95,29 @@ public class BigDataManager {
     }
 
     public void writeAllUsersToDB(List<User> usersToWrite) throws IOException {
-        file = new File(System.getProperty("user.dir") + "\\src\\main\\java\\com\\example\\surinklietuva\\ProgramMemory\\UsersDataBase");
+        file = new File(System.getProperty("user.dir") + userDatabaseDirectory);
         FileWriter writer = null;
-        writer = new FileWriter(file);
-        for (int i = 0; i < usersToWrite.size(); i++) {
+        try
+        {
+            writer = new FileWriter(file);
+            for (int i = 0; i < usersToWrite.size(); i++) {
 
-            writer.write(usersToWrite.get(i).getUserInfoForDataBase() + "\n");
+                writer.write(usersToWrite.get(i).getUserInfoForDataBase() + "\n");
+            }
+            writer.close();
         }
-        writer.close();
+        catch (Exception e)
+        {
+            System.out.println("No file to write was found");
+        }
+
     }
 
     private static List<String> returnStringsListFromLine(String line) {
         List<String> x;
         x = List.of(line.split("\\|\\|"));
         return x;
+
     }
 
     public void updateUserToDataBase(List<User> userList, User userToUpdate) throws IOException {
@@ -114,6 +128,9 @@ public class BigDataManager {
         }
         writeAllUsersToDB(userList);
     }
+    
+    
+    
 
     public List<Magnet> getListOfMagnetsByRegion(List<Magnet> magnets, String regionName) {
         return magnets.stream().filter(m -> m.getArea().equals(regionName)).collect(Collectors.toList());
